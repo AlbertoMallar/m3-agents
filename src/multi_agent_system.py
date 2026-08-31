@@ -62,7 +62,9 @@ FINANCE_FALLBACK_RESPONSE: Final = (
     "No se pudo generar una respuesta de Finanzas en este momento."
 )
 OUT_OF_SCOPE_PLACEHOLDER_RESPONSE: Final = (
-    "La consulta no pudo asignarse a HR, Tech o Finance en este esqueleto inicial."
+    "No pude determinar si tu consulta corresponde a Recursos Humanos, Soporte "
+    "Tecnico o Finanzas. Indica el area o agrega un poco mas de contexto para "
+    "poder orientarte."
 )
 
 ROUTE_TO_NODE: Final[dict[Route, str]] = {
