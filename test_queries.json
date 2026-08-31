@@ -1,0 +1,63 @@
+[
+  {
+    "id": "hr-001",
+    "domain": "hr",
+    "query": "Cuantos dias de vacaciones me corresponden?"
+  },
+  {
+    "id": "hr-002",
+    "domain": "hr",
+    "query": "Como solicito una licencia por enfermedad?"
+  },
+  {
+    "id": "hr-003",
+    "domain": "hr",
+    "query": "PI Cloud ofrece subsidio de guarderia?",
+    "expects_safe_response": true
+  },
+  {
+    "id": "tech-001",
+    "domain": "tech",
+    "query": "No puedo conectarme a la VPN."
+  },
+  {
+    "id": "tech-002",
+    "domain": "tech",
+    "query": "Cambie de telefono y no recibo mis codigos MFA."
+  },
+  {
+    "id": "tech-003",
+    "domain": "tech",
+    "query": "Mi laptop corporativa tiene la pantalla rota."
+  },
+  {
+    "id": "finance-001",
+    "domain": "finance",
+    "query": "Como solicito el reintegro de un gasto?"
+  },
+  {
+    "id": "finance-002",
+    "domain": "finance",
+    "query": "Cuando se paga una factura aprobada?"
+  },
+  {
+    "id": "finance-003",
+    "domain": "finance",
+    "query": "Un proveedor pidio cambiar su cuenta bancaria. Que hago?"
+  },
+  {
+    "id": "out-001",
+    "domain": "out_of_scope",
+    "query": "Quien gano el mundial?"
+  },
+  {
+    "id": "out-002",
+    "domain": "out_of_scope",
+    "query": "No puedo conectarme a la VPN y quiero saber cuantos dias de vacaciones tengo."
+  },
+  {
+    "id": "out-003",
+    "domain": "out_of_scope",
+    "query": "Necesito ayuda."
+  }
+]

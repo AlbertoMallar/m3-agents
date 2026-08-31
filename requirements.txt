@@ -1,0 +1,13 @@
+# Dependencias del Proyecto Integrador M3
+langchain>=1.0,<2.0
+langgraph>=1.2,<2.0
+langchain-openai>=1.6,<2.0
+langchain-chroma>=1.1,<2.0
+langchain-text-splitters>=1.1,<2.0
+langfuse>=4.0,<5.0
+openai>=1.0,<3.0
+pydantic>=2.7,<3.0
+python-dotenv>=1.0.1
+tiktoken>=0.7,<1.0
+jupyter>=1.0,<2.0
+ipykernel>=6.0,<7.0
