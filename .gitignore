@@ -1,4 +1,5 @@
 # Environment / secrets
+AGENTS.md
 .env
 .env.*
 *.env

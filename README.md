@@ -72,7 +72,9 @@ LANGFUSE_HOST=https://cloud.langfuse.com
 
 Langfuse es opcional para ejecucion local: si las tres variables `LANGFUSE_*` no
 estan presentes, la instrumentacion funciona en modo no-op. Una configuracion
-parcial genera un error explicito.
+parcial genera un error explicito. `LANGFUSE_HOST` debe corresponder a la region
+del proyecto de Langfuse; este proyecto fue validado con
+`https://hipaa.cloud.langfuse.com`.
 
 ## Ejecucion
 
@@ -141,7 +143,8 @@ del evaluator no bloquea la respuesta principal.
 
 ## Decisiones tecnicas
 
-- LangGraph conserva un workflow stateful con contratos tipados.
+- LangGraph implementa el workflow mediante un estado tipado, nodos y routing
+  condicional.
 - LangChain aporta componentes LLM y RAG sin APIs deprecadas.
 - Structured output evita parsing fragil para routing y evaluacion.
 - Chroma local mantiene un vector store por dominio.
@@ -157,8 +160,8 @@ del evaluator no bloquea la respuesta principal.
   evaluator.
 - Langfuse es opcional en local, pero necesario para observabilidad Cloud.
 
-## Proximas mejoras
+## Próximas mejoras
 
 - Umbrales de relevancia y citas visibles de chunks en las respuestas.
-- Reranking y evaluaciones de regresion mas amplias.
+- Reranking y evaluaciones de regresión más amplias.
 - Multi-intent y handoffs controlados entre especialistas.
