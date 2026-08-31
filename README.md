@@ -34,6 +34,7 @@ data/
   tech_docs/tech_knowledge_base.md
   finance_docs/finance_knowledge_base.md
 scripts/
+  chat_cli.py             # Demo interactiva del workflow real
   run_mvp_tests.py
 src/
   agents/                 # Orchestrator y especialistas HR, Tech y Finance
@@ -86,6 +87,24 @@ python -m src.multi_agent_system
 
 Para usar el flujo trazado desde Python, importar `invoke_workflow` o
 `stream_workflow` desde `src.multi_agent_system`.
+
+## Demo interactiva
+
+La interfaz de consola reutiliza el workflow real y permite probar consultas
+libres sin crear un segundo routing:
+
+```powershell
+python scripts\chat_cli.py
+python scripts\chat_cli.py --verbose
+python scripts\chat_cli.py --evaluate
+```
+
+Las opciones `1`, `2` y `3` ejecutan ejemplos de HR, Tech y Finance,
+respectivamente; tambien se aceptan consultas libres, `ayuda`/`help` y
+`salir`/`exit`. El modo `--verbose` muestra eventos observables, cambios
+relevantes de estado y referencias compactas de los chunks recuperados. El modo
+`--evaluate` ejecuta el evaluator despues de la respuesta y consume una llamada
+adicional al modelo.
 
 ## Tests
 
@@ -162,17 +181,5 @@ del evaluator no bloquea la respuesta principal.
 
 ## Próximas mejoras
 
-La mejora principal propuesta es una interfaz interactiva de consola para
-demostrar, probar manualmente y observar el workflow actual sin alterar su
-comportamiento ni realizar llamadas adicionales al LLM solo para explicarlo.
-
-- Permitir consultas libres y reutilizar el workflow multiagente existente.
-- Mostrar la clasificación del Orchestrator, el agente seleccionado y las
-  actualizaciones relevantes del estado.
-- Indicar cuándo se ejecuta retrieval, cuántos chunks se recuperan y su metadata
-  útil, sin imprimir el contexto completo.
-- Presentar la respuesta final e indicar si el especialista encontró contexto
-  interno suficiente para responder.
-
-Como extensiones posteriores, se podrían incorporar multi-intent, handoffs,
-reranking y evaluaciones de regresión más amplias.
+- Multi-intent y handoffs controlados entre especialistas.
+- Reranking y evaluaciones de regresión más amplias.

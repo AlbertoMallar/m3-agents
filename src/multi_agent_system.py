@@ -7,7 +7,9 @@ the graph structure defined here.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable as CollectionCallable, Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from functools import lru_cache, partial
 from typing import TYPE_CHECKING, Any, Callable, Final, Literal, NotRequired, TypedDict, cast
 
@@ -108,6 +110,47 @@ OrchestratorHandler = Callable[[InputState], RoutingUpdate]
 SpecialistHandler = Callable[[OverallState], ResponseUpdate]
 
 
+class WorkflowEvent(TypedDict):
+    """Optional runtime diagnostics emitted without changing workflow state."""
+
+    name: Literal["classification", "retrieval", "generation", "out_of_scope"]
+    data: dict[str, Any]
+
+
+WorkflowObserver = CollectionCallable[[WorkflowEvent], None]
+_workflow_observer: ContextVar[WorkflowObserver | None] = ContextVar(
+    "workflow_observer",
+    default=None,
+)
+
+
+@contextmanager
+def _observe_workflow_events(observer: WorkflowObserver | None) -> Iterator[None]:
+    """Scope optional presentation diagnostics to one workflow invocation."""
+
+    token = _workflow_observer.set(observer)
+    try:
+        yield
+    finally:
+        _workflow_observer.reset(token)
+
+
+def _emit_workflow_event(
+    name: WorkflowEvent["name"],
+    **data: Any,
+) -> None:
+    """Send safe runtime diagnostics without affecting the workflow result."""
+
+    observer = _workflow_observer.get()
+    if observer is None:
+        return
+    try:
+        observer({"name": name, "data": data})
+    except Exception:
+        # Presentation observers are optional and must never break support flows.
+        return
+
+
 def default_orchestrator_handler(state: InputState) -> RoutingUpdate:
     """Delegate routing to the real orchestrator classifier."""
 
@@ -196,6 +239,13 @@ def _run_specialist_handler(
         ) as retrieval_observation:
             context_documents = retriever.invoke(user_query)
             references = document_references(context_documents)
+            _emit_workflow_event(
+                "retrieval",
+                domain=domain,
+                chunk_count=len(context_documents),
+                chunk_references=references,
+                context_documents=context_documents,
+            )
             update_observation(
                 retrieval_observation,
                 output={"chunk_count": len(context_documents), "chunks": references},
@@ -214,6 +264,12 @@ def _run_specialist_handler(
                 "response": result.response,
                 "has_sufficient_context": result.has_sufficient_context,
             }
+            _emit_workflow_event(
+                "generation",
+                domain=domain,
+                has_sufficient_context=result.has_sufficient_context,
+                response_ready=bool(result.response.strip()),
+            )
             update_observation(generation_observation, output=generation_output)
 
         update_observation(agent_observation, output=generation_output)
@@ -252,6 +308,7 @@ def orchestrator_node(
     ) as observation:
         update = handler(state)
         route = _normalize_route(update.get("route"))
+        _emit_workflow_event("classification", route=route)
         update_observation(observation, output={"route": route})
         return {"route": route}
 
@@ -312,11 +369,13 @@ def out_of_scope_node(
     """Terminal fallback node for unsupported routes."""
 
     update = handler(state)
+    response = _normalize_response(
+        update.get("response"),
+        fallback=OUT_OF_SCOPE_PLACEHOLDER_RESPONSE,
+    )
+    _emit_workflow_event("out_of_scope", response_ready=bool(response.strip()))
     return {
-        "response": _normalize_response(
-            update.get("response"),
-            fallback=OUT_OF_SCOPE_PLACEHOLDER_RESPONSE,
-        )
+        "response": response
     }
 
 
@@ -445,50 +504,54 @@ def invoke_workflow(
     input_state: InputState,
     *,
     workflow: "CompiledStateGraph | None" = None,
+    observer: WorkflowObserver | None = None,
 ) -> OutputState:
     """Invoke a workflow under one end-to-end Langfuse root observation."""
 
     active_workflow = workflow or get_default_workflow()
-    with observe(
-        name="multi-agent-workflow",
-        as_type="agent",
-        input={"user_query": input_state["user_query"]},
-        error_stage="workflow",
-    ) as observation:
-        result = cast(OutputState, active_workflow.invoke(input_state))
-        update_observation(
-            observation,
-            output={"route": result["route"], "response": result["response"]},
-        )
-        return result
+    with _observe_workflow_events(observer):
+        with observe(
+            name="multi-agent-workflow",
+            as_type="agent",
+            input={"user_query": input_state["user_query"]},
+            error_stage="workflow",
+        ) as observation:
+            result = cast(OutputState, active_workflow.invoke(input_state))
+            update_observation(
+                observation,
+                output={"route": result["route"], "response": result["response"]},
+            )
+            return result
 
 
 def stream_workflow(
     input_state: InputState,
     *,
     workflow: "CompiledStateGraph | None" = None,
+    observer: WorkflowObserver | None = None,
 ) -> Iterator[dict[str, dict[str, Any]]]:
     """Stream a workflow while preserving one end-to-end Langfuse trace context."""
 
     active_workflow = workflow or get_default_workflow()
     route: Route | None = None
     response: str | None = None
-    with observe(
-        name="multi-agent-workflow",
-        as_type="agent",
-        input={"user_query": input_state["user_query"]},
-        error_stage="workflow",
-    ) as observation:
-        for update in active_workflow.stream(input_state, stream_mode="updates"):
-            node_name, node_update = next(iter(update.items()))
-            route = node_update.get("route", route)
-            response = node_update.get("response", response)
-            yield cast(dict[str, dict[str, Any]], {node_name: node_update})
+    with _observe_workflow_events(observer):
+        with observe(
+            name="multi-agent-workflow",
+            as_type="agent",
+            input={"user_query": input_state["user_query"]},
+            error_stage="workflow",
+        ) as observation:
+            for update in active_workflow.stream(input_state, stream_mode="updates"):
+                node_name, node_update = next(iter(update.items()))
+                route = node_update.get("route", route)
+                response = node_update.get("response", response)
+                yield cast(dict[str, dict[str, Any]], {node_name: node_update})
 
-        update_observation(
-            observation,
-            output={"route": route, "response": response},
-        )
+            update_observation(
+                observation,
+                output={"route": route, "response": response},
+            )
 
 
 def main() -> None:
