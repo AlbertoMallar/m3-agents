@@ -162,6 +162,17 @@ del evaluator no bloquea la respuesta principal.
 
 ## Próximas mejoras
 
-- Umbrales de relevancia y citas visibles de chunks en las respuestas.
-- Reranking y evaluaciones de regresión más amplias.
-- Multi-intent y handoffs controlados entre especialistas.
+La mejora principal propuesta es una interfaz interactiva de consola para
+demostrar, probar manualmente y observar el workflow actual sin alterar su
+comportamiento ni realizar llamadas adicionales al LLM solo para explicarlo.
+
+- Permitir consultas libres y reutilizar el workflow multiagente existente.
+- Mostrar la clasificación del Orchestrator, el agente seleccionado y las
+  actualizaciones relevantes del estado.
+- Indicar cuándo se ejecuta retrieval, cuántos chunks se recuperan y su metadata
+  útil, sin imprimir el contexto completo.
+- Presentar la respuesta final e indicar si el especialista encontró contexto
+  interno suficiente para responder.
+
+Como extensiones posteriores, se podrían incorporar multi-intent, handoffs,
+reranking y evaluaciones de regresión más amplias.
